@@ -184,10 +184,60 @@ public class SongDao {
                 con.close();
             }
         } catch (SQLException ex) {
-            System.out.println("ERROR IN RETIIVING PLAYLIST NAMES FROM playlistNames()" + ex);
+            System.out.println("Error in getPlaylistNames method........" + ex);
         }
 
         return playListNames;
+    }
+
+    public List<String> getColNames() {
+        List<String> colNames = new ArrayList<>();
+        try {
+            con = db.getCon();
+            stmt = con.createStatement();
+            String query = "select * from col_name";
+            ResultSet rs = stmt.executeQuery(query);
+
+            while (rs.next()) {
+                colNames.add(rs.getString(2));
+                colNames.add(rs.getString(3));
+            }
+            if (con != null) {
+                stmt.close();
+                con.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error in getColNames method........" + ex);
+        }
+
+        return colNames;
+    }
+
+    public void setCol(String colName) {
+        try {
+            con = db.getCon();
+            stmt = con.createStatement();
+            
+            String query = "select col_name,col_status from col_name where col_name = '" + colName + "'";
+            ResultSet rs = stmt.executeQuery(query);
+
+            rs.next();
+            
+            if(rs.getInt("col_status") == 0){
+                query = "update col_name SET col_status = 1 where col_name = '"+rs.getString("col_name")+"'";
+                stmt.executeUpdate(query);
+            }else{
+                query = "update col_name SET col_status = 0 where col_name = '"+rs.getString("col_name")+"'";
+                stmt.executeUpdate(query);
+            }
+            
+            if (con != null) {
+                stmt.close();
+                con.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error in setCol method........" + ex);
+        }
     }
 
     public int songLocationToID(String songLocation) {
