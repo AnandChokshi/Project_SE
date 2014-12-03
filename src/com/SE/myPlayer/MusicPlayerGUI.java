@@ -74,7 +74,7 @@ public class MusicPlayerGUI extends javax.swing.JFrame {
     private final String tableName;
     private final int dropControl;
     private String[] songData;
-    private int currentSongRow = -1, stopCheck = 0, threadStop = 0, next = 0, previous = 0, rowCount, pointerProgress = 0, pointerDegress = 0, pointerPause = 0, volume, lastRandom = -1;
+    private int playAcc = 1, currentSongRow = -1, stopCheck = 0, threadStop = 0, next = 0, previous = 0, rowCount, pointerProgress = 0, pointerDegress = 0, pointerPause = 0, volume, lastRandom = -1;
     private long progressClick, songLengthSeconds, progressOneSecond;
     private Timer volumeTimer, progressTimer, volumeImg;
     private File file;
@@ -828,25 +828,48 @@ public class MusicPlayerGUI extends javax.swing.JFrame {
 
     private void play_Pause_ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_play_Pause_ButtonActionPerformed
         if (songLocation != null) {
-            if (play_Pause_Button.isSelected()) {
-                try {
-                    if (stopCheck == 0) {
-                        resume();
-                    } else {
-                        play(file);
-                        stopCheck = 0;
+            if (playAcc != 0) {
+                if (play_Pause_Button.isSelected()) {
+                    try {
+                        if (stopCheck == 0) {
+                            resume();
+                        } else {
+                            play(file);
+                            stopCheck = 0;
+                        }
+                    } catch (BasicPlayerException | IOException ex) {
+                        System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
                     }
-                } catch (BasicPlayerException | IOException ex) {
-                    System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
+                } else {
+                    try {
+                        pause();
+                    } catch (BasicPlayerException | IOException ex) {
+                        System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
+                    }
                 }
             } else {
-                try {
-                    pause();
-                } catch (BasicPlayerException | IOException ex) {
-                    System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
+                playAcc = 1;
+                if (!play_Pause_Button.isSelected()) {
+                    try {
+                        if (stopCheck == 0) {
+                            resume();
+                        } else {
+                            play(file);
+                            stopCheck = 0;
+                        }
+                    } catch (BasicPlayerException | IOException ex) {
+                        System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
+                    }
+                } else {
+                    try {
+                        pause();
+                    } catch (BasicPlayerException | IOException ex) {
+                        System.out.println("Error in Play_Pause_ButtonActionPerformed method...." + ex);
+                    }
                 }
             }
         } else {
+            playAcc = 1;
             nextSongSelect();
             next = 1;
             songData_TableMouseClicked(null);
@@ -1029,11 +1052,13 @@ public class MusicPlayerGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        playAcc = 0;
         play_Pause_ButtonActionPerformed(evt);
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
-        songData_Table.scrollRectToVisible(songData_Table.getCellRect(songData_Table.getSelectedRow(), 0, true));
+        songData_Table.setRowSelectionInterval(currentSongRow, currentSongRow);
+        songData_Table.scrollRectToVisible(songData_Table.getCellRect(currentSongRow, 0, true));
     }//GEN-LAST:event_jMenuItem4ActionPerformed
 
     private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
