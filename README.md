@@ -34,3 +34,7 @@ FUNCTIONALITIES:
 9) Add songs to playlist from Explorer by Drag and Drop in this case if song is not in the library first it will be inserted in library without asking user
 
 10) Add songs to playlist by Drag and Drop from another Playlist which is opened in new window
+
+11) You can access last 10 song which you played thruogh recent play list
+
+12) Shuffle and Repeat song functionality
