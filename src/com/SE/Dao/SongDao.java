@@ -27,7 +27,7 @@ public class SongDao {
     private PreparedStatement pstmt = null;
     private final DBConnection db = new DBConnection();
 
-    public String[] selectSong(int rowCount, String tableName) {
+    public String[] selectSong(int rowCount, String tableName, String columnName) {
 
         String[] songData = new String[rowCount];
         int i = 0;
@@ -39,13 +39,13 @@ public class SongDao {
 
             switch (tableName) {
                 case "library":
-                    rs = stmt.executeQuery("select * from library");
+                    rs = stmt.executeQuery("select * from library order by " + columnName + "");
                     break;
                 case "playlist":
-                    rs = stmt.executeQuery("select * from library");
+                    rs = stmt.executeQuery("select * from library order by " + columnName + "");
                     break;
                 default:
-                    rs = stmt.executeQuery("Select library.id_songs, library.song_location, library.song_name, library.song_album, library.song_artist, library.genre, library.year, library.time, library.comment from playlist INNER JOIN library ON library.id_songs = playlist.id_songs AND playlist.playlist_name = '" + tableName + "'");
+                    rs = stmt.executeQuery("Select library.id_songs, library.song_location, library.song_name, library.song_album, library.song_artist, library.genre, library.year, library.time, library.comment from playlist INNER JOIN library ON library.id_songs = playlist.id_songs AND playlist.playlist_name = '" + tableName + "' order by " + columnName + "");
                     break;
             }
 
@@ -91,7 +91,7 @@ public class SongDao {
         }
     }
 
-    public void deleteSong(String songLocation, int rowNumber) {
+    public void deleteSong(String songLocation, int rowNumber, String columnName) {
         String uniqueID;
 
         try {
@@ -99,7 +99,7 @@ public class SongDao {
             stmt = con.createStatement();
             ResultSet rs;
 
-            String query = "select * from library";
+            String query = "select * from library order by " + columnName + "";
             pstmt = con.prepareStatement(query);
             rs = pstmt.executeQuery();
 
@@ -116,6 +116,11 @@ public class SongDao {
             pstmt.executeUpdate();
 
             query = "delete from playlist where id_songs = (?)";
+            pstmt = con.prepareStatement(query);
+            pstmt.setString(1, uniqueID);
+            pstmt.executeUpdate();
+
+            query = "delete from recent_song where song_id = (?)";
             pstmt = con.prepareStatement(query);
             pstmt.setString(1, uniqueID);
             pstmt.executeUpdate();
@@ -217,20 +222,20 @@ public class SongDao {
         try {
             con = db.getCon();
             stmt = con.createStatement();
-            
+
             String query = "select col_name,col_status from col_name where col_name = '" + colName + "'";
             ResultSet rs = stmt.executeQuery(query);
 
             rs.next();
-            
-            if(rs.getInt("col_status") == 0){
-                query = "update col_name SET col_status = 1 where col_name = '"+rs.getString("col_name")+"'";
+
+            if (rs.getInt("col_status") == 0) {
+                query = "update col_name SET col_status = 1 where col_name = '" + rs.getString("col_name") + "'";
                 stmt.executeUpdate(query);
-            }else{
-                query = "update col_name SET col_status = 0 where col_name = '"+rs.getString("col_name")+"'";
+            } else {
+                query = "update col_name SET col_status = 0 where col_name = '" + rs.getString("col_name") + "'";
                 stmt.executeUpdate(query);
             }
-            
+
             if (con != null) {
                 stmt.close();
                 con.close();
@@ -311,12 +316,88 @@ public class SongDao {
             pstmt.setString(1, uniqueID);
             pstmt.executeUpdate();
 
+            query = "delete from recent_song where song_id = (?)";
+            pstmt = con.prepareStatement(query);
+            pstmt.setString(1, uniqueID);
+            pstmt.executeUpdate();
+
             if (con != null) {
                 stmt.close();
                 con.close();
             }
         } catch (SQLException ex) {
             System.out.println("Error in DeleteSong Method....." + ex);
+        }
+    }
+
+    public String getLocations(String splitLocations) {
+        try {
+            con = db.getCon();
+            ResultSet rs;
+            String query = "select song_location from library where song_name = (?)";
+            pstmt = con.prepareStatement(query);
+            pstmt.setString(1, splitLocations);
+            rs = pstmt.executeQuery();
+
+            rs.next();
+
+            splitLocations = rs.getString("song_location");
+
+            if (con != null) {
+
+                stmt.close();
+                con.close();
+
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error in getLocations...." + ex);
+        }
+        return splitLocations;
+    }
+
+    public List<String> getRecentSongs() {
+        List<String> recentSongs = new ArrayList<>();
+        try {
+            con = db.getCon();
+            stmt = con.createStatement();
+            String query = "select library.song_name from recent_song INNER JOIN library ON library.id_songs = recent_song.song_id";
+            ResultSet rs = stmt.executeQuery(query);
+
+            while (rs.next()) {
+                recentSongs.add(rs.getString(1));
+            }
+            if (con != null) {
+                stmt.close();
+                con.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error in getRecentSongs method........" + ex);
+        }
+        return recentSongs;
+    }
+
+    public void addToRecent(String songLocation) {
+        try {
+            con = db.getCon();
+            stmt = con.createStatement();
+            String query = "select count(*) from recent_song";
+            ResultSet rs = stmt.executeQuery(query);
+
+            rs.next();
+            if (rs.getInt(1) > 9) {
+                stmt.executeUpdate("delete from recent_song where id = (select min(id) from recent_song)");
+            }
+
+            int id = songLocationToID(songLocation);
+
+            stmt.executeUpdate("insert into recent_song values (null,'" + id + "')");
+
+            if (con != null) {
+                stmt.close();
+                con.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error in getRecentSongs method........" + ex);
         }
     }
 }
